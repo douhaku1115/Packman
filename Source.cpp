@@ -1,5 +1,7 @@
 #include <conio.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
 char data[]="\
 #####################\
@@ -47,8 +49,48 @@ char cellAA[][2 + 1] = {
 	"Åú",
 };
 int cells[MAZE_HEIGHT][MAZE_WIDTH];
+enum {
+	MONSTER_TYPE_PAC,
+	MONSTER_TYPE_RED,
+	MONSTER_TYPE_BLUE,
+	MONSTER_TYPE_PINK,
+	MONSTER_TYPE_PRANGE,
+	MONSTER_TYPE_MAX
+};
+enum {
+	DIRECTION_NORTH,
+	DIRECTION_WEST,
+	DIRECTION_SOUTH,
+	DIRECTION_EAST,
+	DIRECTION_MAX
+};
+int directions[][2] = {
+{0, -1},//DIRECTION_NORTH,
+{-1,0}, //DIRECTION_WEST
+{0,1},  //DIRECTION_SOUTH
+{1,0}   //DIRECTION_EAST
+};
+char monsterAA[][2 + 1] = {
+	"Åó",
+	"ê‘",
+	"ê¬",
+	"ìç",
+	"ûÚ"
+};
+typedef struct {
+	int x, y;
+	int directions;
+}MONSTER;
+MONSTER monsters[MONSTER_TYPE_MAX ];
+int getMonster(int _x, int _y) {
+	for (int i = 0; i < MONSTER_TYPE_MAX; i++)
+		if ((monsters[i].x == _x) && (monsters[i].y == _y))
+			return i;
+	return -1;
+}
 
 int main() {
+	srand((unsigned int)time(NULL));
 	for (int y = 0; y < MAZE_HEIGHT; y++)
 		for (int x = 0; x < MAZE_WIDTH; x++) {
 			char c = data[MAZE_WIDTH * y + x];
@@ -57,17 +99,65 @@ int main() {
 			case'#':cell = CELL_TYPE_WALL; break;
 			case'o':cell = CELL_TYPE_DOT; break;
 			case'O':cell = CELL_TYPE_POWER; break;
+			default:
+			{
+				int monster = -1;
+				switch (c) {
+				case'@':monster = MONSTER_TYPE_PAC; break;
+				case'r':monster = MONSTER_TYPE_RED; break;
+				case'b':monster = MONSTER_TYPE_BLUE; break;
+				case'p':monster = MONSTER_TYPE_PINK; break;
+				case'y':monster = MONSTER_TYPE_PRANGE; break;
+				}
+				if (monster >= 0) {
+					monsters[monster].x = x;
+					monsters[monster].y = y;
+				}
+			}
+			break;
 		}
 			cells[y][x] = cell;
 
 	}
-
-	for (int y = 0; y < MAZE_HEIGHT; y++) {
-		for (int x = 0; x < MAZE_WIDTH; x++) {
-			printf(cellAA[cells[y][x]]);
+	while (1) {
+		system("cls");
+		for (int y = 0; y < MAZE_HEIGHT; y++) {
+			for (int x = 0; x < MAZE_WIDTH; x++) {
+				int monster = getMonster(x, y);
+				if (monster >= 0)
+					printf(monsterAA[monster]);
+				else
+					printf(cellAA[cells[y][x]]);
+			}
+			printf("\n");
 		}
-		printf("\n");
-	}
-	_getch();
+		int x = monsters[MONSTER_TYPE_PAC].x;
+		int y = monsters[MONSTER_TYPE_PAC].y;
+		switch (_getch()) {
+		case'w':y--; break;
+		case's':y++; break;
+		case'a':x--; break;
+		case'd':x++; break;
+		}
+		x = (MAZE_WIDTH + x) % MAZE_WIDTH;
+		if (cells[y][x] == CELL_TYPE_WALL) {
 
+		}
+		else {
+			cells[y][x] =CELL_TYPE_NONE;
+			monsters[MONSTER_TYPE_PAC].x = x;
+			monsters[MONSTER_TYPE_PAC].y = y;
+		}
+		for (int i = MONSTER_TYPE_PAC + 1; i < MONSTER_TYPE_MAX; i++) {
+			int x = monsters[i].x + directions[monsters[i].directions][0]; 
+			int y = monsters[i].y + directions[monsters[i].directions][1];
+			if (cells[y][x] == CELL_TYPE_WALL) {
+				monsters[i].directions = rand() % DIRECTION_MAX;
+
+			}
+			else
+				monsters[i].x = x;
+				monsters[i].y = y;
+		}
+	}
 }
