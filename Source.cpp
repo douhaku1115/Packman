@@ -109,6 +109,19 @@ void gameOver() {
 	_getch();
 	exit(0);
 }
+int getDotCount() {
+	int dotCount = 0;
+	for (int y=0;y<MAZE_HEIGHT;y++)
+		for (int x = 0; x < MAZE_WIDTH; x++) {
+			switch (cells[y][x]) {
+			case CELL_TYPE_DOT:
+			case CELL_TYPE_POWER:
+				dotCount++;
+				break;
+			}
+		}
+	return dotCount;
+}
 int main() {
 	srand((unsigned int)time(NULL));
 	for (int y = 0; y < MAZE_HEIGHT; y++)
@@ -139,6 +152,7 @@ int main() {
 			cells[y][x] = cell;
 
 	}
+	int dotCountMax = getDotCount();
 	while (1) {
 		display();
 		
@@ -151,6 +165,7 @@ int main() {
 		case'd':x++; break;
 		}
 		x = (MAZE_WIDTH + x) % MAZE_WIDTH;
+
 		if (getMonster(x, y) > MONSTER_TYPE_PAC) {
 			gameOver();
 		}
@@ -159,27 +174,40 @@ int main() {
 		}
 		else {
 			cells[y][x] =CELL_TYPE_NONE;
+			int dotCount = getDotCount();
+			int monster = -1;
+			if (dotCount <= 0) {
+			}
+			else if (dotCount == dotCountMax * 3 / 4)monster = MONSTER_TYPE_BLUE;
+			else if (dotCount == dotCountMax * 2 / 4)monster = MONSTER_TYPE_PINK;
+			else if (dotCount == dotCountMax * 1 / 4)monster = MONSTER_TYPE_PRANGE;
+			if(monster>=0){
+				monsters[monster].x = 10;
+				monsters[monster].y = 10;
+			}
 			monsters[MONSTER_TYPE_PAC].x = x;
 			monsters[MONSTER_TYPE_PAC].y = y;
 		}
 		for (int i = MONSTER_TYPE_PAC + 1; i < MONSTER_TYPE_MAX; i++) {
 			int x = monsters[i].x + directions[monsters[i].directions][0];
 			int y = monsters[i].y + directions[monsters[i].directions][1];
+			
 			int monster = getMonster(x, y);
 			if (monster == MONSTER_TYPE_PAC) {
 				monsters[i].x = x;
 				monsters[i].y = y;
 				gameOver();
 			}
-			else if ((cells[y][x] == CELL_TYPE_WALL)
+			if ((cells[y][x] == CELL_TYPE_WALL)
 				|| (monster > MONSTER_TYPE_PAC)) {
 				
 				monsters[i].directions = rand() % DIRECTION_MAX;
 
 			}
-			else
+			else {
 				monsters[i].x = x;
 				monsters[i].y = y;
+			}
 		}
 	}
 }
