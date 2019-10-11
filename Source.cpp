@@ -88,7 +88,27 @@ int getMonster(int _x, int _y) {
 			return i;
 	return -1;
 }
-
+void display() {
+	system("cls");
+	for (int y = 0; y < MAZE_HEIGHT; y++) {
+		for (int x = 0; x < MAZE_WIDTH; x++) {
+			int monster = getMonster(x, y);
+			if (monster >= 0)
+				printf(monsterAA[monster]);
+			else
+				printf(cellAA[cells[y][x]]);
+		}
+		printf("\n");
+	}
+}
+void gameOver() {
+	monsters[MONSTER_TYPE_PAC].x = -1;
+	monsters[MONSTER_TYPE_PAC].y = -1;
+	display();
+	printf("GAME OVER!!\a");
+	_getch();
+	exit(0);
+}
 int main() {
 	srand((unsigned int)time(NULL));
 	for (int y = 0; y < MAZE_HEIGHT; y++)
@@ -120,17 +140,8 @@ int main() {
 
 	}
 	while (1) {
-		system("cls");
-		for (int y = 0; y < MAZE_HEIGHT; y++) {
-			for (int x = 0; x < MAZE_WIDTH; x++) {
-				int monster = getMonster(x, y);
-				if (monster >= 0)
-					printf(monsterAA[monster]);
-				else
-					printf(cellAA[cells[y][x]]);
-			}
-			printf("\n");
-		}
+		display();
+		
 		int x = monsters[MONSTER_TYPE_PAC].x;
 		int y = monsters[MONSTER_TYPE_PAC].y;
 		switch (_getch()) {
@@ -140,6 +151,9 @@ int main() {
 		case'd':x++; break;
 		}
 		x = (MAZE_WIDTH + x) % MAZE_WIDTH;
+		if (getMonster(x, y) > MONSTER_TYPE_PAC) {
+			gameOver();
+		}
 		if (cells[y][x] == CELL_TYPE_WALL) {
 
 		}
@@ -149,9 +163,17 @@ int main() {
 			monsters[MONSTER_TYPE_PAC].y = y;
 		}
 		for (int i = MONSTER_TYPE_PAC + 1; i < MONSTER_TYPE_MAX; i++) {
-			int x = monsters[i].x + directions[monsters[i].directions][0]; 
+			int x = monsters[i].x + directions[monsters[i].directions][0];
 			int y = monsters[i].y + directions[monsters[i].directions][1];
-			if (cells[y][x] == CELL_TYPE_WALL) {
+			int monster = getMonster(x, y);
+			if (monster == MONSTER_TYPE_PAC) {
+				monsters[i].x = x;
+				monsters[i].y = y;
+				gameOver();
+			}
+			else if ((cells[y][x] == CELL_TYPE_WALL)
+				|| (monster > MONSTER_TYPE_PAC)) {
+				
 				monsters[i].directions = rand() % DIRECTION_MAX;
 
 			}
