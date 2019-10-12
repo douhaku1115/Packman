@@ -64,6 +64,8 @@ enum {
 	DIRECTION_EAST,
 	DIRECTION_MAX
 };
+int invincibleTime;
+#define INVINCIBLE_TIME_MAX 40
 int directions[][2] = {
 {0, -1},//DIRECTION_NORTH,
 {-1,0}, //DIRECTION_WEST
@@ -94,7 +96,10 @@ void display() {
 		for (int x = 0; x < MAZE_WIDTH; x++) {
 			int monster = getMonster(x, y);
 			if (monster >= 0)
-				printf(monsterAA[monster]);
+				if((monster>MONSTER_TYPE_PAC)&&(invincibleTime>0))
+					printf("%s",(invincibleTime<INVINCIBLE_TIME_MAX/4)?"¢":"›");
+				else
+					printf(monsterAA[monster]);
 			else
 				printf(cellAA[cells[y][x]]);
 		}
@@ -167,16 +172,33 @@ int main() {
 		x = (MAZE_WIDTH + x) % MAZE_WIDTH;
 
 		if (getMonster(x, y) > MONSTER_TYPE_PAC) {
-			gameOver();
+			if (invincibleTime > 0) {
+				int monster = getMonster(x, y);
+				monsters[monster].x = 10;
+				monsters[monster].y = 10;
+			}
+			else
+				gameOver();
 		}
 		if (cells[y][x] == CELL_TYPE_WALL) {
 
 		}
 		else {
+			if (cells[y][x] == CELL_TYPE_POWER) {
+				invincibleTime = INVINCIBLE_TIME_MAX;
+
+
+			}
 			cells[y][x] =CELL_TYPE_NONE;
 			int dotCount = getDotCount();
 			int monster = -1;
 			if (dotCount <= 0) {
+				monsters[MONSTER_TYPE_PAC].x = x;
+				monsters[MONSTER_TYPE_PAC].y = y;
+				display();
+				printf("CLEAR!!\a");
+				_getch();
+				exit(0);
 			}
 			else if (dotCount == dotCountMax * 3 / 4)monster = MONSTER_TYPE_BLUE;
 			else if (dotCount == dotCountMax * 2 / 4)monster = MONSTER_TYPE_PINK;
@@ -194,11 +216,17 @@ int main() {
 			
 			int monster = getMonster(x, y);
 			if (monster == MONSTER_TYPE_PAC) {
-				monsters[i].x = x;
-				monsters[i].y = y;
-				gameOver();
+				if (invincibleTime > 0) {
+					monsters[i].x = 10;
+					monsters[i].y = 10;
+				}
+				else {
+					monsters[i].x = x;
+					monsters[i].y = y;
+					gameOver();
+				}
 			}
-			if ((cells[y][x] == CELL_TYPE_WALL)
+			else if ((cells[y][x] == CELL_TYPE_WALL)
 				|| (monster > MONSTER_TYPE_PAC)) {
 				
 				monsters[i].directions = rand() % DIRECTION_MAX;
@@ -209,5 +237,7 @@ int main() {
 				monsters[i].y = y;
 			}
 		}
+		if (invincibleTime > 0)
+			invincibleTime--;
 	}
 }
